@@ -1,0 +1,15 @@
+[Unit]
+Description=4chan Meta Crawler
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/run/inb4-crawler.pid
+ExecStart=/bin/inb4-crawler
+ExecReload=/bin/kill -s SIGHUP $MAINPID
+ExecStop=/bin/kill -s SIGHUP $MAINPID
+Restart=always
+KillSignal=SIGHUP
+
+[Install]
+WantedBy=multi-user.targeteven
