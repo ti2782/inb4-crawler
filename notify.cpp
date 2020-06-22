@@ -31,7 +31,7 @@ void Notify::sendNotification(int threadnum, int postnum, std::string subject, s
   if(isUniqueNotification(chan.str()))
     {  
       // SEND NOTIFICATION
-      cmd << "inb4-notifier " << telegramToken << " \"" << metatxt << "\" "
+      cmd << "inb4-notify " << telegramToken << " \"" << metatxt << "\" "
 	  << chan.str() << " " << archive.str();
       if(!subject.empty())
 	{
