@@ -11,28 +11,9 @@
 
 // NOTIFICATIONS
 #define TELEGRAMTOKEN_FILE "telegramtoken"
+#define TELEGRAMCHAT_ID "@inb4sauce"
+#define TELEGRAMPOLL_ENABLE 1
 #define NOTIFY_FILE "notifications"
 #define META_FILE "metas.json"
 #define MAX_NOTIFICATIONS 50
-
-// METAS
-#define STORM 0
-#define BLACKBIRDS 1
-#define CAPTAINTRIPS 2
-#define TISI 3
-#define CORONACURE 4
-#define HELLHOUNDS 5
-#define GENERALWASHINGTON 6
-#define DECOY 7
-#define NR13 8
-#define INSOLENCE 9
-#define DEATHANGEL 10
-#define COMMUNISMKILLS 11
-#define YOURMASTER 12
-#define THIRDHORSEMAN 13
-#define FIVEDCHESS 14
-#define COLONEL 15
-#define SKUNKBAY 16
-#define INTERCEPT 17
-#define FLAILOFGOD 18
 #endif // CONFIG_H
