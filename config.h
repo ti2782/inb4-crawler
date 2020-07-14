@@ -10,10 +10,9 @@
 #define ARCHIVEURL "https://archive.4plebs.org/pol/thread/"
 
 // NOTIFICATIONS
-#define TELEGRAMTOKEN_FILE "telegramtoken"
-#define TELEGRAMCHAT_ID "@inb4sauce"
 #define TELEGRAMPOLL_ENABLE 1
 #define NOTIFY_FILE "notifications"
-#define META_FILE "metas.json"
+#define CONFIG_FILE "config.json"
 #define MAX_NOTIFICATIONS 50
+#define TELEGRAM_URL "https://api.telegram.org/bot"
 #endif // CONFIG_H

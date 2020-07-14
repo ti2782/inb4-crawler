@@ -3,39 +3,69 @@
 using namespace rapidjson;
 
 Notify::Notify()
-{    
-  // READ TELEGRAM BOT TOKEN
-  std::string tokenFileName(CONFIG_DIR);
-  tokenFileName.append(TELEGRAMTOKEN_FILE);
-  std::ifstream telegramFile(tokenFileName);
-  if(!telegramFile.is_open())
-    std::cout << ">>WARNING\nTelegram bot TOKEN required for notifications!" << std::endl;
-  else
+{
+  // READ CONFIG FILE
+  std::string configFileName(CONFIG_DIR);
+  configFileName.append(CONFIG_FILE);
+  
+  // OPEN FILE
+  FILE* configFile = fopen(configFileName.c_str(), "r");
+  if(configFile)
     {
-      std::getline(telegramFile, telegramToken);
-      telegramFile.close();
+      char buff[2048];
+      FileReadStream is(configFile, buff, sizeof(buff));
+
+      // PARSE JSON DOCUMENT
+      Document doc;
+      doc.ParseStream(is);
+      fclose(configFile);
+
+      if(doc.IsObject())
+	{
+	  if(doc.HasMember("accounts"))
+	    {
+	      const Value& accountJson = doc["accounts"];
+	      for( SizeType i = 0; i < accountJson.Size(); i++)    
+		{
+		  Account* account = new Account;
+		  if(accountJson[i].HasMember("telegramChannel"))
+		    account->telegramChannel = accountJson[i]["telegramChannel"].GetString();
+		  if(accountJson[i].HasMember("telegramToken"))
+		    account->telegramToken = accountJson[i]["telegramToken"].GetString();
+		  if(accountJson[i].HasMember("telegramPoll"))
+		    account->telegramPoll = accountJson[i]["telegramPoll"].GetString();
+		  if(accountJson[i].HasMember("twitterAccount"))
+		    account->twitter = accountJson[i]["twitterAccount"].GetString();
+		  
+		  if(!account->telegramChannel.empty() || !account->telegramToken.empty() || !account->twitter.empty())
+		    accountVec.push_back(account);
+		}
+	    }
+	}
     }
-
-  //SET URLS
-  std::stringstream url;
-  url << "https://api.telegram.org/bot" << telegramToken << "/sendMessage";
-  telegramURL = url.str();
-
-  std::stringstream pollUrl;
-  pollUrl << "https://api.telegram.org/bot" << telegramToken << "/sendPoll";
-  telegramPollURL = pollUrl.str();  
+  else
+    std::cout << ">>WARNING\nFailed to open config file!" << std::endl;
 }
 
 Notify::~Notify()
 {
-  if(curl)
-    curl_easy_cleanup(curl);
+  // FREE ACCOUNTS
+  for(int i = 0; i < accountVec.size(); i++)
+    if(accountVec[i])
+      delete accountVec[i];
 }
 
-void Notify::sendNotification(int threadnum, int postnum, std::string subject, std::string comment, std::string metatxt, std::string name)
+void Notify::sendNotification(int threadnum, int postnum, std::string subject, std::string comment, std::string metatxt, std::string name, int account)
 {
   std::string buff;
-  
+
+  // CHECK ACCOUNT
+  if(accountVec.size() <= account)
+    {
+      std::cout << "WARNING\nInvalid Account <" << account << ">" << std::endl;
+      return;
+    }
+    
   if(!subject.empty())
     convertASCII(subject);
 
@@ -44,13 +74,21 @@ void Notify::sendNotification(int threadnum, int postnum, std::string subject, s
   
   // CRAFT LINKS
   std::stringstream chan, archive, cmd, tweet;
+  
+  std::string telegramURL(TELEGRAM_URL);
+  telegramURL.append(accountVec[account]->telegramToken);
+  telegramURL.append("/sendMessage");
+  std::string telegramPollURL(TELEGRAM_URL);
+  telegramPollURL.append(accountVec[account]->telegramToken);
+  telegramPollURL.append("/sendPoll");
+  
   chan << LINKURL << threadnum << "#p" << postnum;  
   archive << ARCHIVEURL << threadnum << "/#" << postnum;
 
   // CRAFT TELEGRAM MSG
   std::string msg;
   msg.append("chat_id=");
-  msg.append(TELEGRAMCHAT_ID);
+  msg.append(accountVec[account]->telegramChannel);
   msg.append("&parse_mode=markdown&text=``` ");
   msg.append(metatxt);
   msg.append("```\nLINK ");
@@ -70,89 +108,99 @@ void Notify::sendNotification(int threadnum, int postnum, std::string subject, s
     {
       std::cout << ">>NEW NOTIFICTION\n" << name << "\n";
       if(!subject.empty())
-	std::cout << subject << "\n";
+ 	std::cout << subject << "\n";
       std::cout << chan.str() << std::endl;
-      
+    
       // SEND TELEGRAM NOTIFICATION
       if(!curl)
-	return;
-      
+ 	return;
+    
       int telegramID;
 
       curl_easy_setopt(curl, CURLOPT_URL, telegramURL.c_str());
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg.c_str());
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
       curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buff);
-      
+    
       /* Perform the request, res will get the return code */ 
       res = curl_easy_perform(curl);
       /* Check for errors */ 
       if(res != CURLE_OK)
-    	std::cout << curl_easy_strerror(res) << std::endl;
+     	std::cout << curl_easy_strerror(res) << std::endl;
       else
-    	{
-    	  Document doc;
-    	  doc.Parse(buff.c_str());
+     	{
+     	  Document doc;
+     	  doc.Parse(buff.c_str());
 
-    	  if(doc.HasMember("result"))
-	    telegramID = doc["result"]["message_id"].GetInt();
+     	  if(doc.HasMember("result"))
+ 	    telegramID = doc["result"]["message_id"].GetInt();
 	  
-	  /* always cleanup */
-	  if(curl)
-	    curl_easy_cleanup(curl);
+ 	  /* always cleanup */
+ 	  if(curl)
+ 	    curl_easy_cleanup(curl);
+	  
 #ifdef TELEGRAMPOLL_ENABLE
-	  // INIT CURL
-	  curl = curl_easy_init();
+ 	  // INIT CURL
+ 	  curl = curl_easy_init();
 	  
-	  // SEND TELEGRAM POLL
-	  msg.clear();
-	  buff.clear();
+ 	  // SEND TELEGRAM POLL
+ 	  msg.clear();
+ 	  buff.clear();
 	  
-	  Document pollDoc;
-	  auto& alloc = pollDoc.GetAllocator();
-	  Value options(kArrayType);
-	  options.PushBack("REAL ✅", alloc);
-	  options.PushBack("FAKE ❌", alloc);
+ 	  Document pollDoc;
+ 	  auto& alloc = pollDoc.GetAllocator();
+ 	  Value options(kArrayType);
+ 	  options.PushBack("Yes ✅", alloc);
+ 	  options.PushBack("NO ❌", alloc);
 	  
-	  pollDoc.SetObject();	  	  
-	  pollDoc.AddMember("chat_id", TELEGRAMCHAT_ID, alloc);
-	  pollDoc.AddMember("question", "Is this thread legit?", alloc);
-	  pollDoc.AddMember("options", options, alloc);
-	  pollDoc.AddMember("disable_notification", true, alloc);
-	  pollDoc.AddMember("reply_to_message_id", telegramID, alloc);
-	  pollDoc.AddMember("open_period", 600, alloc);  // Max 600 seconds
+ 	  pollDoc.SetObject();
+ 	  pollDoc.AddMember("chat_id", StringRef(accountVec[account]->telegramChannel.c_str()), alloc);
+ 	  pollDoc.AddMember("question", StringRef(accountVec[account]->telegramPoll.c_str()), alloc);
+ 	  pollDoc.AddMember("options", options, alloc);
+ 	  pollDoc.AddMember("disable_notification", true, alloc);
+ 	  pollDoc.AddMember("reply_to_message_id", telegramID, alloc); 	  
 	  
 	  
-	  StringBuffer buffer;
-	  Writer<rapidjson::StringBuffer> writer(buffer);
-	  pollDoc.Accept(writer);
+ 	  StringBuffer buffer;
+ 	  Writer<rapidjson::StringBuffer> writer(buffer);
+ 	  pollDoc.Accept(writer);
 
-	  struct curl_slist *headers = NULL;
-	  headers = curl_slist_append(headers, "Content-Type: application/json");
+ 	  struct curl_slist *headers = NULL;
+ 	  headers = curl_slist_append(headers, "Content-Type: application/json");
 	  
-	  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);	  
-	  curl_easy_setopt(curl, CURLOPT_URL, telegramPollURL.c_str());
-	  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, buffer.GetString());
-	  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-	  curl_easy_setopt(curl, CURLOPT_POST, 1L);
-	  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buff);
+ 	  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);	  
+ 	  curl_easy_setopt(curl, CURLOPT_URL, telegramPollURL.c_str());
+ 	  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, buffer.GetString());
+ 	  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+ 	  curl_easy_setopt(curl, CURLOPT_POST, 1L);
+ 	  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buff);
 	  
-	  /* Perform the request, res will get the return code */ 
-	  res = curl_easy_perform(curl);
-	  /* Check for errors */ 
-	  if(res != CURLE_OK)
-	    std::cout << curl_easy_strerror(res) << std::endl;
+ 	  /* Perform the request, res will get the return code */ 
+ 	  res = curl_easy_perform(curl);
+ 	  /* Check for errors */ 
+ 	  if(res != CURLE_OK)
+ 	    std::cout << curl_easy_strerror(res) << std::endl;
 
-	  /* always cleanup */
-	  if(curl)
-	    {
-	      curl_easy_cleanup(curl);
-	      curl_slist_free_all(headers);
-	    }
-    	}
+ 	  /* always cleanup */
+ 	  if(curl)
+ 	    {
+ 	      curl_easy_cleanup(curl);
+ 	      curl_slist_free_all(headers);
+ 	    }
+     	}
 
 #endif // TELEGRAMPOLL_ENABLE
-           
+
+      // SET TWURL ACCOUNT
+      std::string accountSwitch = "/usr/local/bin/twurl set default ";
+      accountSwitch.append(accountVec[account]->twitter);
+
+      if(system(accountSwitch.c_str()) > 0)
+	{
+	  std::cout << "WARNING\nFailed to switch Twurl Account to " << accountVec[account]->twitter << std::endl;
+	  return;
+	}
+      
       // SEND TWITTER MSG
       tweet << metatxt << " LINK " << chan.str() << " ARCHIVE LINK " << archive.str();
       if(!subject.empty())
@@ -164,7 +212,7 @@ void Notify::sendNotification(int threadnum, int postnum, std::string subject, s
 	tweet.str() << "\" /1.1/statuses/update.json";
       
       system(twurlcmd.str().c_str());      
-    }  
+    }
 }
 
 bool Notify::isUniqueNotification(std::string notification)

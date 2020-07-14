@@ -13,6 +13,12 @@
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+#include "rapidjson/filereadstream.h"
+
+struct Account
+{
+  std::string telegramChannel, telegramToken, telegramPoll, twitter;
+};
 
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -25,16 +31,15 @@ class Notify
  private:
   CURL* curl;
   CURLcode res;
-  std::string telegramToken;
-  std::string telegramURL, telegramPollURL;
   
   bool isUniqueNotification(std::string notification);
+  std::vector<Account*> accountVec;
   
  public:
   Notify();
   ~Notify();
 
-  void sendNotification(int threadnum, int postnum, std::string subject, std::string comment, std::string metatxt, std::string name);
+  void sendNotification(int threadnum, int postnum, std::string subject, std::string comment, std::string metatxt, std::string name, int account);
   void convertASCII(std::string& text);
   
 };

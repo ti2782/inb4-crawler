@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdio>
 #include <memory>
+#include <iostream>
 
 #include "config.h"
 #include "rapidjson/document.h"
@@ -13,29 +14,39 @@
 struct Meta
 {
   std::string name, hash, text;
+  int account;
 };
 
 class MetaHandler
 {
  private:
   std::unordered_map<std::string, Meta*> metaMap;
-  std::string metaFileName;
+  std::string configFileName;
   
  public:
   MetaHandler();
   ~MetaHandler();
   
   bool populateMetaMap();
-  bool findMeta(const char* hash, std::string& text, std::string& name);
+  bool findMeta(const char* hash, std::string& text, std::string& name, int& account);
 };
 
-/* META JSON FILE STRUCTURE
+/* CONFIG JSON FILE STRUCTURE
 { 
+  "accounts" [
+     {
+          "telegramChannel" : "@channel",
+	  "telegramToken" : "8u348208730876986345",
+	  "telegramPoll" : "Is this thread authorized?",	 
+	  "twitterAccount" : "TweetKang"
+     }
+  ],
   "metas" : [
      {
         "name": "",
 	"hash": "",
-	"txt": ""
+	"txt": "",
+	"acc": 0
      }
   ]
 }

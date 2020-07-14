@@ -4,8 +4,8 @@ using namespace rapidjson;
 
 MetaHandler::MetaHandler()
 {
-  metaFileName.append(CONFIG_DIR);
-  metaFileName.append(META_FILE);
+  configFileName.append(CONFIG_DIR);
+  configFileName.append(CONFIG_FILE);
 }
 
 MetaHandler::~MetaHandler()
@@ -19,20 +19,26 @@ MetaHandler::~MetaHandler()
 bool MetaHandler::populateMetaMap()
 {
   // OPEN FILE
-  FILE* metaFile = fopen(metaFileName.c_str(), "r");
-  if(!metaFile)
-    return false;
+  FILE* configFile = fopen(configFileName.c_str(), "r");
+  if(!configFile)
+    {
+      std::cout << ">>WARNING\nFailed to open config file" << std::endl;
+      return false;
+    }
 
   char buff[2048];
-  FileReadStream is(metaFile, buff, sizeof(buff));
+  FileReadStream is(configFile, buff, sizeof(buff));
 
   // PARSE JSON DOCUMENT
   Document doc;
   doc.ParseStream(is);
-  fclose(metaFile);
+  fclose(configFile);
 
   if(!doc.IsObject())
-    return false;
+    {
+      std::cout << ">>WARNING\nFailed to parse config file" << std::endl;
+      return false;
+    }
 
   if(!doc.HasMember("metas"))
     return false;
@@ -47,6 +53,8 @@ bool MetaHandler::populateMetaMap()
       meta->hash = metaJson[i]["hash"].GetString();
     if(metaJson[i].HasMember("txt"))
       meta->text = metaJson[i]["txt"].GetString();
+    if(metaJson[i].HasMember("acc"))
+      meta->account = metaJson[i]["acc"].GetInt();
 
     if(!meta->name.empty() || !meta->hash.empty() || !meta->text.empty())
       metaMap.insert({meta->hash, meta});
@@ -54,7 +62,7 @@ bool MetaHandler::populateMetaMap()
   return true;
 }
 
-bool MetaHandler::findMeta(const char* hash, std::string& text, std::string& name)
+bool MetaHandler::findMeta(const char* hash, std::string& text, std::string& name, int& account)
 {
   auto search = metaMap.find(hash);
   if(search == metaMap.end())
@@ -62,5 +70,6 @@ bool MetaHandler::findMeta(const char* hash, std::string& text, std::string& nam
 
   text = search->second->text;
   name = search->second->name;
+  account = search->second->account;
   return true;
 }
