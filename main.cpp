@@ -27,12 +27,17 @@ int main(int argc, char** argv)
       auto threads = downloader.downloadThreadList();    
       std::cout << ">>PARSING " << std::endl;
       for(int i = 0; i < threads.size(); i++)
-	{
+	{	  
 	  // DOWNLOAD THREAD
-	  std::unique_ptr<Notification> notification(downloader.downloadThread(threads[i]));
-	  // SEND NOTIFICATION
-	  if(notification)
-	    notify.sendNotification(notification->threadnum, notification->postnum, notification->subject, notification->comment, notification->metatxt, notification->name, notification->account);
+	  auto notVec = downloader.downloadThread(threads[i]);
+	  
+	  // SEND NOTIFICATINOS
+	  for(int c = 0; c < notVec.size(); c++)
+	    {
+	      std::unique_ptr<Notification> notification(notVec[c]);
+	      if(notification)
+		notify.sendNotification(notification->threadnum, notification->postnum, notification->subject, notification->comment, notification->metatxt, notification->name, notification->account);
+	    }
 	}      
     }
   

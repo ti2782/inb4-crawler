@@ -289,4 +289,7 @@ void Notify::convertASCII(std::string& text)
 	  text.replace(pos, (end + 1) - pos, &encoded);
 	}
     }
+  
+  for(std::size_t pos = text.find("&quot;"); pos != std::string::npos; pos = text.find("&quot;", pos+1))
+    text.erase(pos, 6);
 }

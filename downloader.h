@@ -30,7 +30,7 @@ class Downloader
   ~Downloader();
 
   std::vector<int> downloadThreadList();
-  Notification* downloadThread(int threadnum);
+  std::vector<Notification*> downloadThread(int threadnum);
 };
 
 #endif

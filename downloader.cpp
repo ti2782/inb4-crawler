@@ -76,12 +76,13 @@ std::vector<int> Downloader::downloadThreadList()
   return threadnums;
 }
 
-Notification* Downloader::downloadThread(int threadnum)
+std::vector<Notification*> Downloader::downloadThread(int threadnum)
 {
+  std::vector<Notification*> ret;
   curl = curl_easy_init();
       
   if(!curl)
-    return NULL;
+    return ret;
   
   std::string url(THREADURL);
   url.append(std::to_string(threadnum).append(".json"));
@@ -98,7 +99,7 @@ Notification* Downloader::downloadThread(int threadnum)
       std::cout << curl_easy_strerror(res) << std::endl;
       curl_easy_cleanup(curl);
       std::this_thread::sleep_for(1s);
-      return NULL;
+      return ret;
     }
   else
     {
@@ -139,10 +140,8 @@ Notification* Downloader::downloadThread(int threadnum)
 		      notification->comment = comment.c_str();
 		      notification->metatxt = metatxt.c_str();
 		      notification->name = name.c_str();
+		      ret.push_back(notification);
 
-		      curl_easy_cleanup(curl);
-		      std::this_thread::sleep_for(1s);
-		      return notification;
 		    }
 		}	      
 	    }      
@@ -151,5 +150,5 @@ Notification* Downloader::downloadThread(int threadnum)
       
   curl_easy_cleanup(curl);
   std::this_thread::sleep_for(1s);
-  return NULL;
+  return ret;
 }
