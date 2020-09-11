@@ -53,6 +53,8 @@ bool MetaHandler::populateMetaMap()
       meta->hash = metaJson[i]["hash"].GetString();
     if(metaJson[i].HasMember("txt"))
       meta->text = metaJson[i]["txt"].GetString();
+    if(metaJson[i].HasMember("hashtags"))
+      meta->hashtags = metaJson[i]["hashtags"].GetString();
     if(metaJson[i].HasMember("acc"))
       meta->account = metaJson[i]["acc"].GetInt();
 
@@ -62,14 +64,16 @@ bool MetaHandler::populateMetaMap()
   return true;
 }
 
-bool MetaHandler::findMeta(const char* hash, std::string& text, std::string& name, int& account)
+Meta* MetaHandler::findMeta(const char* hash)
 {
+  Meta* meta = NULL;
+
+  if(!hash)
+    return meta;
+  
   auto search = metaMap.find(hash);
   if(search == metaMap.end())
-    return false;
+    return meta;
 
-  text = search->second->text;
-  name = search->second->name;
-  account = search->second->account;
-  return true;
+  return search->second;
 }

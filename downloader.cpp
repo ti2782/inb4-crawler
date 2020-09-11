@@ -115,16 +115,15 @@ std::vector<Notification*> Downloader::downloadThread(int threadnum)
 	      int postnum;
 	      std::string comment, hash;
 	      if(posts[i].HasMember("md5"))
-		{
-		  std::string metatxt, name;
-		  int account;
-		  
+		{		  
 		  hash = posts[i]["md5"].GetString();
 		  if(posts[i].HasMember("sub"))
-		    subject = posts[i]["sub"].GetString(); // Keep SUBJECT line for notifications	  
-		  if(metaHandler.findMeta(hash.c_str(), metatxt, name, account))
+		    subject = posts[i]["sub"].GetString(); // Keep SUBJECT line for notifications
+		  
+		  Meta* meta = metaHandler.findMeta(hash.c_str());
+		  if(meta)
 		    {
-		      std::cout << ">>FOUND " << name << std::endl;
+		      std::cout << ">>FOUND " << meta->name << std::endl;
 
 		      if(posts[i].HasMember("no"))
 			postnum = posts[i]["no"].GetInt();
@@ -135,11 +134,12 @@ std::vector<Notification*> Downloader::downloadThread(int threadnum)
 		      Notification* notification = new Notification;
 		      notification->threadnum = threadnum;
 		      notification->postnum = postnum;
-		      notification->account = account;
+		      notification->account = meta->account;
 		      notification->subject = subject.c_str();
 		      notification->comment = comment.c_str();
-		      notification->metatxt = metatxt.c_str();
-		      notification->name = name.c_str();
+		      notification->metatxt = meta->text.c_str();
+		      notification->name = meta->name.c_str();
+		      notification->hashtags = meta->hashtags.c_str();
 		      ret.push_back(notification);
 
 		    }

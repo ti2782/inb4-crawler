@@ -36,7 +36,7 @@ int main(int argc, char** argv)
 	    {
 	      std::unique_ptr<Notification> notification(notVec[c]);
 	      if(notification)
-		notify.sendNotification(notification->threadnum, notification->postnum, notification->subject, notification->comment, notification->metatxt, notification->name, notification->account);
+		notify.sendNotification(notification->threadnum, notification->postnum, notification->subject, notification->comment, notification->metatxt, notification->name, notification->hashtags, notification->account);
 	    }
 	}      
     }

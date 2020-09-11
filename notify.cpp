@@ -55,7 +55,7 @@ Notify::~Notify()
       delete accountVec[i];
 }
 
-void Notify::sendNotification(int threadnum, int postnum, std::string subject, std::string comment, std::string metatxt, std::string name, int account)
+void Notify::sendNotification(int threadnum, int postnum, std::string subject, std::string comment, std::string metatxt, std::string name, std::string hashtags, int account)
 {
   std::string buff;
 
@@ -205,7 +205,7 @@ void Notify::sendNotification(int threadnum, int postnum, std::string subject, s
       tweet << metatxt << " LINK " << chan.str() << " ARCHIVE LINK " << archive.str();
       if(!subject.empty())
 	tweet << " " << subject;
-      tweet << " #inb4source";
+      tweet << " " << hashtags;
       
       std::stringstream twurlcmd;
       twurlcmd << "/usr/local/bin/twurl -d possibly_sensitive=true -d status=\"" <<

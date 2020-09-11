@@ -39,7 +39,7 @@ class Notify
   Notify();
   ~Notify();
 
-  void sendNotification(int threadnum, int postnum, std::string subject, std::string comment, std::string metatxt, std::string name, int account);
+  void sendNotification(int threadnum, int postnum, std::string subject, std::string comment, std::string metatxt, std::string name, std::string hashtags, int account);
   void convertASCII(std::string& text);
   
 };

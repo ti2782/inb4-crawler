@@ -14,7 +14,7 @@
 struct Notification
 {
   int threadnum, postnum, account;
-  std::string subject, comment, metatxt, name;
+  std::string subject, comment, metatxt, name, hashtags;
 };
 
 class Downloader

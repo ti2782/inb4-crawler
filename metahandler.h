@@ -13,7 +13,7 @@
 
 struct Meta
 {
-  std::string name, hash, text;
+  std::string name, hash, text, hashtags;
   int account;
 };
 
@@ -28,7 +28,7 @@ class MetaHandler
   ~MetaHandler();
   
   bool populateMetaMap();
-  bool findMeta(const char* hash, std::string& text, std::string& name, int& account);
+  Meta* findMeta(const char* hash);
 };
 
 /* CONFIG JSON FILE STRUCTURE
