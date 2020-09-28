@@ -289,10 +289,18 @@ void Notify::convertASCII(std::string& text)
 	  text.replace(pos, (end + 1) - pos, &encoded);
 	}
     }
-  
-  for(std::size_t pos = text.find("&quot;"); pos != std::string::npos; pos = text.find("&quot;", pos+1))
-    text.erase(pos, 6);
-  
-  for(std::size_t pos = text.find("\'"); pos != std::string::npos; pos = text.find("\'", pos+1))
-    text.erase(pos, 1);
+
+  // Remove remaining HTML
+  // :TODO replace with corresponding symbol
+  removeHtml(text);
+}
+
+void Notify::removeHtml(std::string& text)
+{
+  for(std::size_t pos = text.find("&"); pos != std::string::npos; pos = text.find("&", pos+1))
+    {
+      std::size_t end = text.find(";", pos);
+      if(end != std::string::npos)
+	text.erase(pos, (end - pos) + 1);
+    }
 }
