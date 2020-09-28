@@ -292,4 +292,7 @@ void Notify::convertASCII(std::string& text)
   
   for(std::size_t pos = text.find("&quot;"); pos != std::string::npos; pos = text.find("&quot;", pos+1))
     text.erase(pos, 6);
+  
+  for(std::size_t pos = text.find("\'"); pos != std::string::npos; pos = text.find("\'", pos+1))
+    text.erase(pos, 1);
 }
