@@ -297,7 +297,7 @@ void Notify::convertASCII(std::string& text)
 
 void Notify::removeHtml(std::string& text)
 {
-  for(std::size_t pos = text.find("&"); pos != std::string::npos; pos = text.find("&", pos+1))
+  for(std::size_t pos = text.find("&"); pos != std::string::npos; pos = text.find("&"))
     {
       std::size_t end = text.find(";", pos);
       if(end != std::string::npos)
