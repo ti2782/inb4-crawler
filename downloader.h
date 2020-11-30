@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <thread>
+#include <mutex>
 #include <curl/curl.h>
 
 #include "rapidjson/document.h"
@@ -21,16 +22,18 @@ class Downloader
 {
  private:   
   MetaHandler metaHandler;
-  CURL *curl;
-
+  
   std::vector<int> threadnums;
+  std::mutex guard;
+  std::vector<Notification*> notVec;
   
  public:
   Downloader();
   ~Downloader();
 
   std::vector<int> downloadThreadList();
-  std::vector<Notification*> downloadThread(int threadnum);
+  void downloadThread(int threadnum);
+  std::vector<Notification*> getNotifications();
 };
 
 #endif

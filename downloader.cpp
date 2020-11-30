@@ -19,7 +19,11 @@ Downloader::Downloader()
 
 Downloader::~Downloader()
 {
-
+  for(int i = 0; i < notVec.size(); i++)
+    {
+      if(notVec[i])
+	delete notVec[i];
+    }
 }
 
 std::vector<int> Downloader::downloadThreadList()
@@ -27,7 +31,7 @@ std::vector<int> Downloader::downloadThreadList()
   // Clear Old Threadlist
   threadnums.clear();
 
-  curl = curl_easy_init();
+  CURL* curl = curl_easy_init();
   if(!curl)
     return threadnums;
 
@@ -76,13 +80,12 @@ std::vector<int> Downloader::downloadThreadList()
   return threadnums;
 }
 
-std::vector<Notification*> Downloader::downloadThread(int threadnum)
+void Downloader::downloadThread(int threadnum)  
 {
-  std::vector<Notification*> ret;
-  curl = curl_easy_init();
+  CURL* curl = curl_easy_init();
       
   if(!curl)
-    return ret;
+    return;
   
   std::string url(THREADURL);
   url.append(std::to_string(threadnum).append(".json"));
@@ -98,8 +101,7 @@ std::vector<Notification*> Downloader::downloadThread(int threadnum)
     {
       std::cout << curl_easy_strerror(res) << std::endl;
       curl_easy_cleanup(curl);
-      std::this_thread::sleep_for(1s);
-      return ret;
+      return;
     }
   else
     {
@@ -122,13 +124,15 @@ std::vector<Notification*> Downloader::downloadThread(int threadnum)
 		  
 		  Meta* meta = metaHandler.findMeta(hash.c_str());
 		  if(meta)
-		    {
+		    {		      
 		      std::cout << ">>FOUND " << meta->name << std::endl;
 
 		      if(posts[i].HasMember("no"))
 			postnum = posts[i]["no"].GetInt();
 		      if(posts[i].HasMember("com"))
 			comment = posts[i]["com"].GetString();
+
+		      std::lock_guard<std::mutex> lock(guard);
 		      
 		      // STORE SOCIAL MEDIA NOTIFICATION
 		      Notification* notification = new Notification;
@@ -140,8 +144,7 @@ std::vector<Notification*> Downloader::downloadThread(int threadnum)
 		      notification->metatxt = meta->text.c_str();
 		      notification->name = meta->name.c_str();
 		      notification->hashtags = meta->hashtags.c_str();
-		      ret.push_back(notification);
-
+		      notVec.push_back(notification);
 		    }
 		}	      
 	    }      
@@ -149,6 +152,12 @@ std::vector<Notification*> Downloader::downloadThread(int threadnum)
     }
       
   curl_easy_cleanup(curl);
-  std::this_thread::sleep_for(1s);
+  return;
+}
+
+std::vector<Notification*> Downloader::getNotifications()
+{
+  auto ret = notVec;
+  notVec.clear();
   return ret;
 }

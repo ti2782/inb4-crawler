@@ -126,7 +126,7 @@ void Notify::sendNotification(int threadnum, int postnum, std::string subject, s
       res = curl_easy_perform(curl);
       /* Check for errors */ 
       if(res != CURLE_OK)
-     	std::cout << curl_easy_strerror(res) << std::endl;
+     	std::cout << ">>WARNING\n" << curl_easy_strerror(res) << std::endl;
       else
      	{
      	  Document doc;
