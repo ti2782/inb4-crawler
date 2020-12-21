@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# $FreeBSD$
+#
+# PROVIDE: inb4_crawler
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add these lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# inb4_crawler_enable (bool):	Set to NO by default.
+#				Set it to YES to enable doormand.
+# inb4_crawler_host (string):	Set to 127.0.0.1:27017
+#				by default.
+
+. /etc/rc.subr
+
+name=inb4_crawler
+rcvar=${name}_enable
+
+load_rc_config ${name}
+
+: ${inb4_crawler_enable:="NO"}
+: ${inb4_crawler_host="127.0.0.1:27017"}
+: ${inb4_crawler_logfile="/var/log/inb4/crawler.log"}
+: ${inb4_crawler_bin="/usr/local/bin/inb4-crawler"}
+
+command="/usr/sbin/daemon"
+command_args="-o ${inb4_crawler_logfile} -r -R 30 ${inb4_crawler_bin} --node ${inb4_crawler_host}"
+
+run_rc_command "$1"
