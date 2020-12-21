@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "config.h"
+#include "meta.h"
 #include <curl/curl.h>
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -39,7 +40,7 @@ class Notify
   Notify();
   ~Notify();
 
-  void sendNotification(int threadnum, int postnum, std::string subject, std::string comment, std::string metatxt, std::string name, std::string hashtags, int account);
+  void sendNotification(Notification* n = NULL);
   void convertASCII(std::string& text);
   void removeHtml(std::string& text);
 };

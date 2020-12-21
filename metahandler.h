@@ -8,14 +8,10 @@
 #include <iostream>
 
 #include "config.h"
+#include "meta.h"
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 
-struct Meta
-{
-  std::string name, hash, text, hashtags;
-  int account;
-};
 
 class MetaHandler
 {

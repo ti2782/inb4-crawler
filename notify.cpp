@@ -55,19 +55,22 @@ Notify::~Notify()
       delete accountVec[i];
 }
 
-void Notify::sendNotification(int threadnum, int postnum, std::string subject, std::string comment, std::string metatxt, std::string name, std::string hashtags, int account)
+void Notify::sendNotification(Notification* n)
 {
+  if(!n)
+    return;
+  
   std::string buff;
 
   // CHECK ACCOUNT
-  if(accountVec.size() <= account)
+  if(accountVec.size() <= n->account)
     {
-      std::cout << "WARNING\nInvalid Account <" << account << ">" << std::endl;
+      std::cout << "WARNING\nInvalid Account <" << n->account << ">" << std::endl;
       return;
     }
     
-  if(!subject.empty())
-    convertASCII(subject);
+  if(!n->subject.empty())
+    convertASCII(n->subject);
 
   // INIT CURL
   curl = curl_easy_init();
@@ -76,39 +79,39 @@ void Notify::sendNotification(int threadnum, int postnum, std::string subject, s
   std::stringstream chan, archive, cmd, tweet;
   
   std::string telegramURL(TELEGRAM_URL);
-  telegramURL.append(accountVec[account]->telegramToken);
+  telegramURL.append(accountVec[n->account]->telegramToken);
   telegramURL.append("/sendMessage");
   std::string telegramPollURL(TELEGRAM_URL);
-  telegramPollURL.append(accountVec[account]->telegramToken);
+  telegramPollURL.append(accountVec[n->account]->telegramToken);
   telegramPollURL.append("/sendPoll");
   
-  chan << LINKURL << threadnum << "#p" << postnum;  
-  archive << ARCHIVEURL << threadnum << "/#" << postnum;
+  chan << LINKURL << n->threadnum << "#p" << n->postnum;  
+  archive << ARCHIVEURL << n->threadnum << "/#" << n->postnum;
 
   // CRAFT TELEGRAM MSG
   std::string msg;
   msg.append("chat_id=");
-  msg.append(accountVec[account]->telegramChannel);
+  msg.append(accountVec[n->account]->telegramChannel);
   msg.append("&parse_mode=markdown&text=``` ");
-  msg.append(metatxt);
+  msg.append(n->metatxt);
   msg.append("```\nLINK ");
   msg.append(chan.str());
   msg.append("\nARCHIVE LINK ");
   msg.append(archive.str());
   
-  if(!subject.empty())
+  if(!n->subject.empty())
     {
       msg.append("\n*");
-      msg.append(subject);
+      msg.append(n->subject);
       msg.append("*");
     }
   
   // CONFIRM UNIQUENESS
   if(isUniqueNotification(chan.str()))
     {
-      std::cout << ">>NEW NOTIFICTION\n" << name << "\n";
-      if(!subject.empty())
- 	std::cout << subject << "\n";
+      std::cout << ">>NEW NOTIFICTION\n" << n->name << "\n";
+      if(!n->subject.empty())
+ 	std::cout << n->subject << "\n";
       std::cout << chan.str() << std::endl;
     
       // SEND TELEGRAM NOTIFICATION
@@ -154,8 +157,8 @@ void Notify::sendNotification(int threadnum, int postnum, std::string subject, s
  	  options.PushBack("NO ❌", alloc);
 	  
  	  pollDoc.SetObject();
- 	  pollDoc.AddMember("chat_id", StringRef(accountVec[account]->telegramChannel.c_str()), alloc);
- 	  pollDoc.AddMember("question", StringRef(accountVec[account]->telegramPoll.c_str()), alloc);
+ 	  pollDoc.AddMember("chat_id", StringRef(accountVec[n->account]->telegramChannel.c_str()), alloc);
+ 	  pollDoc.AddMember("question", StringRef(accountVec[n->account]->telegramPoll.c_str()), alloc);
  	  pollDoc.AddMember("options", options, alloc);
  	  pollDoc.AddMember("disable_notification", true, alloc);
  	  pollDoc.AddMember("reply_to_message_id", telegramID, alloc); 	  
@@ -179,7 +182,7 @@ void Notify::sendNotification(int threadnum, int postnum, std::string subject, s
  	  res = curl_easy_perform(curl);
  	  /* Check for errors */ 
  	  if(res != CURLE_OK)
- 	    std::cout << curl_easy_strerror(res) << std::endl;
+ 	    std::cout << ">>WARNING\n" << curl_easy_strerror(res) << std::endl;
 
  	  /* always cleanup */
  	  if(curl)
@@ -193,19 +196,19 @@ void Notify::sendNotification(int threadnum, int postnum, std::string subject, s
 
       // SET TWURL ACCOUNT
       std::string accountSwitch = "/usr/local/bin/twurl set default ";
-      accountSwitch.append(accountVec[account]->twitter);
+      accountSwitch.append(accountVec[n->account]->twitter);
 
       if(system(accountSwitch.c_str()) > 0)
 	{
-	  std::cout << "WARNING\nFailed to switch Twurl Account to " << accountVec[account]->twitter << std::endl;
+	  std::cout << "WARNING\nFailed to switch Twurl Account to " << accountVec[n->account]->twitter << std::endl;
 	  return;
 	}
       
       // SEND TWITTER MSG
-      tweet << metatxt << " LINK " << chan.str() << " ARCHIVE LINK " << archive.str();
-      if(!subject.empty())
-	tweet << " " << subject;
-      tweet << " " << hashtags;
+      tweet << n->metatxt << " LINK " << chan.str() << " ARCHIVE LINK " << archive.str();
+      if(!n->subject.empty())
+	tweet << " " << n->subject;
+      tweet << " " << n->hashtags;
       
       std::stringstream twurlcmd;
       twurlcmd << "/usr/local/bin/twurl -d possibly_sensitive=true -d status=\"" <<
