@@ -115,6 +115,10 @@ std::vector<Notification*> Db::getNotifications()
       if(store)
 	n->threadnum = store.get_int32();
 
+      store = doc["account"];
+      if(store)
+	n->account = store.get_int32();
+
       store = doc["subject"];
       if(store)
 	n->subject = store.get_utf8().value.to_string();
