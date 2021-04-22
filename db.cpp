@@ -113,7 +113,7 @@ std::vector<Notification*> Db::getNotifications()
 
       store = doc["postnum"];
       if(store)
-	n->threadnum = store.get_int32();
+	n->postnum = store.get_int32();
 
       store = doc["account"];
       if(store)
